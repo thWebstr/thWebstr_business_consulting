@@ -309,14 +309,9 @@ p {
 
 section {
     padding: var(--section-padding) 0;
-    opacity: 0;
-    transform: translateY(30px);
-    transition: var(--transition-smooth);
-}
-
-section.visible {
     opacity: 1;
     transform: translateY(0);
+    transition: var(--transition-smooth);
 }
 
 /* ============================================
@@ -360,6 +355,7 @@ section.visible {
     position: relative;
     z-index: 2;
     max-width: 900px;
+    margin-top: 4rem;
 }
 
 .hero h1 {
@@ -945,8 +941,8 @@ section.visible {
    ANIMATIONS
    ============================================ */
 .fade-in-up {
-    opacity: 0;
-    transform: translateY(30px);
+    opacity: 1;
+    transform: translateY(0);
     transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
@@ -956,9 +952,14 @@ section.visible {
 }
 
 .stagger-animation>* {
-    opacity: 0;
-    transform: translateY(20px);
+    opacity: 1;
+    transform: translateY(0);
     transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.stagger-animation.visible>* {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .stagger-animation.visible>*:nth-child(1) {
@@ -1013,7 +1014,7 @@ section.visible {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
     :root {
         --section-padding: 60px;
     }
@@ -1029,22 +1030,24 @@ section.visible {
     .nav-menu {
         position: fixed;
         top: 0;
-        left: -100%;
+        left: 0;
         width: 70%;
         height: 100vh;
         background: var(--white);
+        display: flex;
         flex-direction: column;
         padding: 6rem 2rem 2rem;
         box-shadow: 5px 0 20px rgba(0, 0, 0, 0.1);
-        transition: var(--transition-smooth);
-        gap: 1.5rem;
-        align-items: flex-start;
+        gap: 1.5rem !important;
+        align-items: flex-start !important;
         z-index: 999;
         overflow-y: auto;
+        transform: translateX(-100%);
+        transition: transform 0.4s ease;
     }
 
     .nav-menu.active {
-        left: 0;
+        transform: translateX(0);
     }
 
     .nav-menu a {

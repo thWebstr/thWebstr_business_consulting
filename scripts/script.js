@@ -407,36 +407,26 @@ document.addEventListener('DOMContentLoaded', function () {
     // INITIAL ANIMATIONS ON LOAD
     // ============================================
 
-    // Trigger initial animations
-    setTimeout(() => {
-        const hero = document.querySelector('.hero');
-        if (hero) {
-            hero.classList.add('visible');
+    // Trigger initial animations immediately
+    const hero = document.querySelector('.hero');
+    if (hero) {
+        hero.classList.add('visible');
+    }
+
+    // Mark ALL sections as visible on load
+    const allSections = document.querySelectorAll('section');
+    allSections.forEach((section) => {
+        section.classList.add('visible');
+    });
+
+    // Mark all fade-in-up elements in viewport on load
+    const fadeElements = document.querySelectorAll('.fade-in-up, .stagger-animation');
+    fadeElements.forEach((element) => {
+        const rect = element.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+            element.classList.add('visible');
         }
-
-        // Also make immediately visible sections visible on all pages
-        const sections = document.querySelectorAll('section');
-        sections.forEach((section, index) => {
-            if (index === 0 || index === 1) {
-                const rect = section.getBoundingClientRect();
-                // If section is in viewport, mark it as visible
-                if (rect.top < window.innerHeight) {
-                    section.classList.add('visible');
-                }
-            }
-        });
-
-        // Mark all fade-in-up elements in first 2 sections as visible if needed
-        const fadeElements = document.querySelectorAll('.fade-in-up, .stagger-animation');
-        fadeElements.forEach((element, index) => {
-            if (index < 10) {
-                const rect = element.getBoundingClientRect();
-                if (rect.top < window.innerHeight && rect.bottom > 0) {
-                    element.classList.add('visible');
-                }
-            }
-        });
-    }, 100);
+    });
 
     // ============================================
     // CONSOLE BRANDING
