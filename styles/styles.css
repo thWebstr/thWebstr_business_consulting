@@ -35,6 +35,8 @@
     /* Transitions */
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-fast: all 0.2s ease;
+    /* Subtle accents */
+    --rotate-accent: rgba(235, 224, 255, 0.30);
 }
 
 html {
@@ -113,15 +115,24 @@ p {
     z-index: 1000;
     padding: 1.5rem 0;
     transition: var(--transition-smooth);
-    background: transparent;
+    background: var(--white);
+    transform: translateY(0);
+    border-bottom: 1.5px solid var(--primary-purple);
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.navbar.navbar-hidden {
+    transform: translateY(-100%);
 }
 
 .navbar.scrolled {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--white);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.06);
     padding: 1rem 0;
+    border-bottom: 1.5px solid var(--primary-purple);
 }
 
 .nav-container {
@@ -221,19 +232,98 @@ p {
 .menu-toggle {
     display: none;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 5px;
+    padding: 8px 6px;
+    /* increase clickable area */
+    z-index: 1101;
+    /* ensure it's above other page layers */
+    align-items: flex-end;
+    /* align lines to the right */
+    position: relative;
+    /* allow absolute positioning when open */
 }
 
 .menu-toggle span {
-    width: 28px;
+    display: block;
     height: 3px;
     background: var(--dark-charcoal);
     transition: var(--transition-fast);
-    border-radius: 3px;
+    border-radius: 6px;
+    /* round the ends */
+}
+
+/* hamburger open state (class-driven instead of inline styles) */
+.menu-toggle.open span:nth-child(1) {
+    /* centered and rotated when open - handled below */
+}
+
+.menu-toggle.open span:nth-child(2) {
+    /* centered and hidden when open - handled below */
+}
+
+.menu-toggle.open span:nth-child(3) {
+    /* centered and rotated when open - handled below */
+}
+
+/* Make hamburger lines different lengths */
+.menu-toggle span:nth-child(1) {
+    width: 34px;
+    /* longest */
+}
+
+.menu-toggle span:nth-child(2) {
+    width: 24px;
+    /* medium */
+}
+
+.menu-toggle span:nth-child(3) {
+    width: 20px;
+    /* shortest */
+}
+
+/* When menu is open, center the lines to form a neat X regardless of their individual widths */
+.menu-toggle.open span {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-origin: center;
+    margin: 0;
+    /* reset any flow margins */
+}
+
+.menu-toggle.open span:nth-child(1) {
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 34px;
+}
+
+.menu-toggle.open span:nth-child(2) {
+    transform: translate(-50%, -50%);
+    opacity: 0;
+}
+
+.menu-toggle.open span:nth-child(3) {
+    transform: translate(-50%, -50%) rotate(-45deg);
+    width: 34px;
+    /* make same length as top when forming the X for visual balance */
+}
+
+/* Make hamburger lines different lengths */
+.menu-toggle span:nth-child(1) {
+    width: 34px;
+    /* longest */
+}
+
+.menu-toggle span:nth-child(2) {
+    width: 24px;
+    /* medium */
+}
+
+.menu-toggle span:nth-child(3) {
+    width: 20px;
+    /* shortest */
 }
 
 /* ============================================
@@ -334,7 +424,7 @@ section {
     right: -20%;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, rgba(107, 47, 214, 0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, var(--rotate-accent) 0%, transparent 70%);
     border-radius: 50%;
     animation: float 20s ease-in-out infinite;
 }
@@ -349,6 +439,77 @@ section {
     50% {
         transform: translate(-30px, 30px);
     }
+}
+
+/* Decorative rotating accents for additional sections */
+.services,
+.services-section,
+.portfolio,
+.portfolio-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.services::before,
+.services-section::before,
+.portfolio::before,
+.portfolio-section::before {
+    content: '';
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, var(--rotate-accent) 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+    animation: float 22s ease-in-out infinite, rotate 48s linear infinite;
+    opacity: 0.95;
+    mix-blend-mode: screen;
+    filter: blur(12px);
+}
+
+/* Make rotating accents visible on light-background sections (e.g. contact) */
+.bg-light {
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-light::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 720px;
+    height: 720px;
+    background: radial-gradient(circle, var(--rotate-accent) 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+    animation: float 24s ease-in-out infinite, rotate 40s linear infinite;
+    opacity: 0.95;
+    mix-blend-mode: screen;
+    filter: blur(10px);
+}
+
+/* Ensure content sits above the decorative accent */
+.bg-light .container-narrow,
+.bg-light .contact-form {
+    position: relative;
+    z-index: 2;
+}
+
+.services::before,
+.services-section::before {
+    top: -15%;
+    left: -8%;
+    transform: translateZ(0);
+}
+
+.portfolio::before,
+.portfolio-section::before {
+    bottom: -12%;
+    right: -8%;
+    transform: translateZ(0);
 }
 
 .hero-content {
@@ -420,6 +581,7 @@ section {
     transition: var(--transition-smooth);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
 .card::before {
@@ -477,7 +639,7 @@ section {
     padding: 2.5rem;
     border-radius: 12px;
     border: 1px solid var(--border-gray);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
     transition: var(--transition-smooth);
 }
 
@@ -511,7 +673,7 @@ section {
     background: var(--white);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.10);
     transition: var(--transition-smooth);
     border: 1px solid var(--border-gray);
 }
@@ -896,7 +1058,10 @@ section {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, var(--rotate-accent) 0%, transparent 70%);
+    opacity: 0.9;
+    mix-blend-mode: screen;
+    filter: blur(10px);
     animation: rotate 30s linear infinite;
 }
 
@@ -912,6 +1077,7 @@ section {
 
 .cta-content {
     position: relative;
+    padding: 7px;
     z-index: 2;
 }
 
@@ -1054,7 +1220,7 @@ section {
         font-size: 1.125rem;
         display: block;
         width: 100%;
-        padding: 0.75rem 0;
+        padding: 0.75rem 1rem;
     }
 
     .hero {
@@ -1117,19 +1283,17 @@ section {
         font-size: 2rem;
     }
 
-    h2 {
-        font-size: 1.75rem;
-    }
-
-    .logo img {
-        height: 35px;
-        width: 35px;
-    }
-
-    .logo-text {
-        font-size: 1.25rem;
-    }
 }
+
+.logo img {
+    height: 35px;
+    width: 35px;
+}
+
+.logo-text {
+    font-size: 1.25rem;
+}
+
 
 /* ============================================
    UTILITY CLASSES

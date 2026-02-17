@@ -5,6 +5,7 @@
 
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM loaded — initializing main script');
 
     // ============================================
     // NAVIGATION SCROLL BEHAVIOR
@@ -14,45 +15,118 @@ document.addEventListener('DOMContentLoaded', function () {
     const menuToggle = document.querySelector('.menu-toggle');
     const navMenu = document.querySelector('.nav-menu');
 
-    // Navbar scroll effect
-    window.addEventListener('scroll', function () {
-        if (window.scrollY > 50) {
+    console.log('Elements:', { navbar: !!navbar, navMenu: !!navMenu, menuToggle: !!menuToggle, navLinksCount: navLinks.length });
+
+    // Accessibility: ensure menu toggle has explicit aria state
+    if (menuToggle) menuToggle.setAttribute('aria-expanded', 'false');
+
+    // Navbar scroll effect — hide on scroll down, show on scroll up.
+    // Use the navbar's actual height for reliable hiding and avoid transform class conflicts.
+    let lastScrollTop = window.scrollY || 0;
+    let ticking = false;
+    const HIDE_AFTER = 10; // start hiding after this many px scrolled
+
+    function handleScroll(currentScroll) {
+        if (!navbar) return;
+
+        // show scrolled background after small offset
+        if (currentScroll > 20) {
             navbar.classList.add('scrolled');
         } else {
             navbar.classList.remove('scrolled');
         }
+
+        console.log('handleScroll', { currentScroll, lastScrollTop, navMenuActive: navMenu && navMenu.classList.contains('active'), navbarTransform: navbar.style.transform });
+
+        // if mobile menu is open, keep navbar visible
+        if (navMenu && navMenu.classList.contains('active')) {
+            navbar.style.transform = 'translateY(0)';
+            lastScrollTop = currentScroll;
+            return;
+        }
+
+        // hide on scroll down, show on scroll up
+        if (currentScroll - lastScrollTop > HIDE_AFTER) {
+            // scrolling down
+            const h = navbar.offsetHeight || 80;
+            navbar.style.transform = `translateY(-${h}px)`;
+        } else if (lastScrollTop - currentScroll > 0) {
+            // scrolling up
+            navbar.style.transform = 'translateY(0)';
+        }
+
+        lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+    }
+
+    window.addEventListener('scroll', function () {
+        const currentScroll = window.scrollY;
+        if (!ticking) {
+            window.requestAnimationFrame(function () {
+                handleScroll(currentScroll);
+                ticking = false;
+            });
+            ticking = true;
+        }
     });
 
-    // Mobile menu toggle
-    if (menuToggle) {
-        menuToggle.addEventListener('click', function () {
-            navMenu.classList.toggle('active');
+    // Mobile menu toggle (robust): toggle via function, support touch, close on outside click
+    function setMobileMenu(open) {
+        if (!navMenu) return;
+        open = !!open;
+        navMenu.classList.toggle('active', open);
+        if (menuToggle) {
+            menuToggle.classList.toggle('open', open);
+            menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+        // keep header visible while menu open
+        if (open && navbar) navbar.style.transform = 'translateY(0)';
+        // prevent body scroll when menu open
+        document.body.style.overflow = open ? 'hidden' : '';
+    }
 
-            // Animate hamburger icon
-            const spans = menuToggle.querySelectorAll('span');
-            if (navMenu.classList.contains('active')) {
-                spans[0].style.transform = 'rotate(45deg) translateY(8px)';
-                spans[1].style.opacity = '0';
-                spans[2].style.transform = 'rotate(-45deg) translateY(-8px)';
-            } else {
-                spans[0].style.transform = 'none';
-                spans[1].style.opacity = '1';
-                spans[2].style.transform = 'none';
+    if (menuToggle) {
+        let lastToggleTime = 0;
+        const TOGGLE_DEBOUNCE_MS = 350;
+
+        const toggleHandler = function (e) {
+            e.stopPropagation();
+            if (e.type === 'touchstart') e.preventDefault();
+
+            const now = Date.now();
+            if (now - lastToggleTime < TOGGLE_DEBOUNCE_MS) {
+                lastToggleTime = now;
+                return;
             }
-        });
+            lastToggleTime = now;
+
+            const isOpen = navMenu && navMenu.classList.contains('active');
+            console.log('menuToggle triggered (' + e.type + ') — currently open?', isOpen);
+            setMobileMenu(!isOpen);
+        };
+
+        menuToggle.addEventListener('click', toggleHandler);
+        // passive:false so we can call preventDefault on touchstart
+        menuToggle.addEventListener('touchstart', toggleHandler, { passive: false });
+    } else {
+        console.log('menuToggle element not found — hamburger will not work on narrow screens');
     }
 
     // Close mobile menu when clicking a link
     navLinks.forEach(link => {
-        link.addEventListener('click', function () {
-            if (window.innerWidth <= 768) {
-                navMenu.classList.remove('active');
-                const spans = menuToggle.querySelectorAll('span');
-                spans[0].style.transform = 'none';
-                spans[1].style.opacity = '1';
-                spans[2].style.transform = 'none';
+        link.addEventListener('click', function (e) {
+            if (window.innerWidth <= 1200 && navMenu) {
+                setMobileMenu(false);
             }
         });
+    });
+
+    // Close menu when clicking outside the menu on mobile
+    document.addEventListener('click', function (e) {
+        if (!navMenu || !navMenu.classList.contains('active')) return;
+        const target = e.target;
+        if (menuToggle && menuToggle.contains(target)) return;
+        if (navMenu.contains(target)) return;
+        setMobileMenu(false);
     });
 
     // ============================================
@@ -171,23 +245,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Simulate form submission
+            // Perform real POST to /api/contact
             const submitBtn = contactForm.querySelector('.btn-primary');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
             submitBtn.disabled = true;
 
-            // Simulate API call
-            setTimeout(() => {
-                submitBtn.innerHTML = '<i class="fas fa-check"></i> Message Sent!';
-                showNotification('Thank you! Your message has been sent successfully.', 'success');
-                contactForm.reset();
-
+            fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            }).then(async (res) => {
+                const body = await res.json().catch(() => ({}));
+                if (res.ok) {
+                    submitBtn.innerHTML = '<i class="fas fa-check"></i> Message Sent!';
+                    showNotification(body.message || 'Thank you! Your message has been sent.', 'success');
+                    contactForm.reset();
+                } else {
+                    showNotification(body.error || 'Failed to send message. Try again later.', 'error');
+                }
+            }).catch(err => {
+                console.error('Contact submit error', err);
+                showNotification('Network error. Please try again later.', 'error');
+            }).finally(() => {
                 setTimeout(() => {
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
-                }, 2000);
-            }, 1500);
+                }, 1500);
+            });
         });
     }
 
@@ -419,9 +506,9 @@ document.addEventListener('DOMContentLoaded', function () {
         section.classList.add('visible');
     });
 
-    // Mark all fade-in-up elements in viewport on load
-    const fadeElements = document.querySelectorAll('.fade-in-up, .stagger-animation');
-    fadeElements.forEach((element) => {
+    // Mark all fade-in-up and stagger-animation elements in viewport on load
+    const initialFadeElements = document.querySelectorAll('.fade-in-up, .stagger-animation');
+    initialFadeElements.forEach((element) => {
         const rect = element.getBoundingClientRect();
         if (rect.top < window.innerHeight && rect.bottom > 0) {
             element.classList.add('visible');
